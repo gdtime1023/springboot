@@ -8,6 +8,13 @@ env:
   # Docker Hub 리포지토리: docker.io/<username>/second
   IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/second
 
+  # ===== 여기 3개만 너 환경에 맞게 확인하면 됨 =====
+  K8S_CONTEXT: docker-desktop        # kubectl config get-contexts 로 이름 확인
+  K8S_NAMESPACE: default             # second-deployment.yaml 에 namespace 없으면 default
+  K8S_DEPLOYMENT_NAME: second-deployment  # second-deployment.yaml 의 metadata.name
+  K8S_CONTAINER_NAME: second         # deployment 안에 있는 container 이름
+  # ===============================================
+
 jobs:
   # 1) CI: 빌드 + 도커 이미지 빌드 및 Docker Hub 푸시
   build-and-push:
@@ -51,13 +58,19 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
-      # 처음 한 번은 namespace + deployment + service를 생성
-      - name: Apply Kubernetes manifests (namespace + base deployment/service)
-        run: |
-          kubectl apply -f second-deployment.yaml
+      # 1) kubectl이 Docker Desktop 클러스터를 바라보게 context 설정
+      - name: Set kubectl context
+        run: kubectl config use-context ${{ env.K8S_CONTEXT }}
 
-      # 방금 빌드한 이미지(github.sha 태그)로 롤링 업데이트
+      # 2) deployment / service 생성 또는 업데이트
+      - name: Apply Kubernetes manifests (deployment/service)
+        run: |
+          kubectl apply -f second-deployment.yaml -n ${{ env.K8S_NAMESPACE }}
+
+      # 3) 방금 빌드한 이미지(github.sha 태그)로 롤링 업데이트
       - name: Update image and rollout
         run: |
-          kubectl set image deployment/second second=${{ env.IMAGE_NAME }}:${{ github.sha }} -n second
-          kubectl rollout status deployment/second -n second
+          kubectl set image deployment/${{ env.K8S_DEPLOYMENT_NAME }} \
+            ${{ env.K8S_CONTAINER_NAME }}=${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            -n ${{ env.K8S_NAMESPACE }}
+          kubectl rollout status deployment/${{ env.K8S_DEPLOYMENT_NAME }} -n ${{ env.K8S_NAMESPACE }}

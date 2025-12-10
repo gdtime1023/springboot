@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # 1. Eclipse Temurin 기반 이미지 사용 (Java 17)
+=======
+# 1. OpenJDK 기반 이미지 사용
+>>>>>>> 2e609b9f2dfccea36e65b83f3812865c40885702
 FROM eclipse-temurin:17-jdk
 
 # 2. 애플리케이션 실행 경로 설정
