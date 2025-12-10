@@ -1,11 +1,10 @@
-# 1. OpenJDK 기반 이미지 사용
 FROM eclipse-temurin:17-jdk
 
-# 2. 애플리케이션 실행 경로 설정
 WORKDIR /app
 
-# 3. JAR 파일을 컨테이너에 복사
+# 빌드된 JAR 이름이 다르면 여기만 수정
 COPY target/second-0.0.1-SNAPSHOT.jar app.jar
 
-# 4. 애플리케이션 실행
+EXPOSE 8080
+
 ENTRYPOINT ["java", "-jar", "app.jar"]
