@@ -52,23 +52,28 @@ jobs:
   # 2) CD: 로컬 Docker Desktop Kubernetes에 배포
   deploy:
     needs: build-and-push
-    runs-on: self-hosted   # 로컬 PC에 설치한 러너에서 동작
+    runs-on: self-hosted
 
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
+    - name: Checkout source
+      uses: actions/checkout@v4
 
-      # 1) kubectl이 Docker Desktop 클러스터를 바라보게 context 설정
-      - name: Set kubectl context
-        run: kubectl config use-context ${{ env.K8S_CONTEXT }}
+    - name: Set kubectl context (Docker Desktop)
+      run: kubectl config use-context docker-desktop
 
-      # 2) deployment / service 생성 또는 업데이트
-      - name: Apply Kubernetes manifests (deployment/service)
-        run: |
-          kubectl apply -f second-deployment.yaml -n ${{ env.K8S_NAMESPACE }}
+    # 1) 매니페스트 적용 (없으면 생성, 있으면 업데이트)
+    - name: Apply Kubernetes manifests
+      run: |
+        kubectl apply -f second-deployment.yaml
+        kubectl get deploy second-deployment
 
-      # 3) 방금 빌드한 이미지(github.sha 태그)로 롤링 업데이트
-      - name: Update image and rollout
-        run: |
-          kubectl set image deployment/second-deployment second=${{ env.IMAGE_NAME }}:${{ github.sha }} -n ${{ env.K8S_NAMESPACE }}
-          kubectl rollout status deployment/second-deployment -n ${{ env.K8S_NAMESPACE }}
+    # 2) 새로 빌드한 이미지로 롤링 업데이트
+    - name: Update image and rollout
+      run: |
+        kubectl set image deployment/second-deployment second=${{ env.IMAGE_NAME }}:${{ github.sha }}
+        kubectl rollout status deployment/second-deployment
+
+    # 3) 최종 확인 (선택이지만 있으면 좋음)
+    - name: Check pods
+      run: |
+        kubectl get pods -l app=second
