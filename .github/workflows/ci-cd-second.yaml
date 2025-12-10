@@ -70,7 +70,5 @@ jobs:
       # 3) 방금 빌드한 이미지(github.sha 태그)로 롤링 업데이트
       - name: Update image and rollout
         run: |
-          kubectl set image deployment/${{ env.K8S_DEPLOYMENT_NAME }} \
-            ${{ env.K8S_CONTAINER_NAME }}=${{ env.IMAGE_NAME }}:${{ github.sha }} \
-            -n ${{ env.K8S_NAMESPACE }}
-          kubectl rollout status deployment/${{ env.K8S_DEPLOYMENT_NAME }} -n ${{ env.K8S_NAMESPACE }}
+          kubectl set image deployment/second-deployment second=${{ env.IMAGE_NAME }}:${{ github.sha }} -n ${{ env.K8S_NAMESPACE }}
+          kubectl rollout status deployment/second-deployment -n ${{ env.K8S_NAMESPACE }}
